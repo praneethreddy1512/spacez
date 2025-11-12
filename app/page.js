@@ -57,18 +57,68 @@ const SITE_COUPONS = [
   },
 ];
 
-const BONUS_GIFTCARDS = {
-  title: "Assured vouchers up to ₹1000+",
-  subtitle: "of trending brands",
-  buttonLabel: "Claim gift cards »",
-  accent: "₹400 Gift card",
-};
+const BONUS_GIFTCARDS = [
+  {
+    id: 1,
+    title: "Assured vouchers up to ₹1000+",
+    subtitle: "of trending brands",
+    buttonLabel: "Claim gift cards »",
+    accent: "₹400 Gift card",
+    gradient: "from-blue-500 to-indigo-600",
+    brands: "50+ brands",
+  },
+  {
+    id: 2,
+    title: "Premium dining vouchers",
+    subtitle: "Enjoy fine dining experiences",
+    buttonLabel: "Claim gift cards »",
+    accent: "₹600 Gift card",
+    gradient: "from-purple-500 to-pink-600",
+    brands: "30+ restaurants",
+  },
+  {
+    id: 3,
+    title: "Shopping spree vouchers",
+    subtitle: "Shop at your favorite stores",
+    buttonLabel: "Claim gift cards »",
+    accent: "₹500 Gift card",
+    gradient: "from-green-500 to-emerald-600",
+    brands: "40+ stores",
+  },
+];
 
-const PAYMENT_OFFER = {
-  title: "Save more on your bookings",
-  subtitle: "up to 15% Off on select payment methods",
-  buttonLabel: "Unlock offers »",
-};
+const PAYMENT_OFFERS = [
+  {
+    id: 1,
+    title: "Save more on your bookings",
+    subtitle: "up to 15% Off on select payment methods",
+    buttonLabel: "Unlock offers »",
+    bankName: "Pay Swift",
+    features: [
+      "Extra cashback on first booking",
+      "No-cost EMI on premium stays",
+    ],
+    gradient: "from-orange-400 via-orange-500 to-amber-500",
+  },
+  {
+    id: 2,
+    title: "UPI payment benefits",
+    subtitle: "Get instant discounts on UPI payments",
+    buttonLabel: "Unlock offers »",
+    bankName: "UPI Pay",
+    features: ["10% instant discount", "Cashback on every transaction"],
+    gradient: "from-blue-400 via-blue-500 to-cyan-500",
+  },
+  {
+    id: 3,
+    title: "Credit card exclusive",
+    subtitle: "Special offers for credit card users",
+    buttonLabel: "Unlock offers »",
+    bankName: "Card Plus",
+    features: ["15% cashback", "Zero interest on EMI"],
+    gradient: "from-indigo-400 via-indigo-500 to-purple-500",
+  },
+];
 
 export default function OffersPage() {
   const router = useRouter();
@@ -117,7 +167,7 @@ export default function OffersPage() {
           >
             <div className="flex">
               <div
-                className={`bg-linear-to-b ${offer.gradient} text-white w-16 sm:w-20 flex flex-col items-center justify-between py-4 sm:py-6`}
+                className={`bg-gradient-to-b ${offer.gradient} text-white w-16 sm:w-20 flex flex-col items-center justify-between py-4 sm:py-6`}
               >
                 <span
                   className="text-xs sm:text-sm font-semibold tracking-[0.3em] uppercase text-white/80"
@@ -196,39 +246,46 @@ export default function OffersPage() {
       <p className="text-sm font-medium uppercase text-gray-500 tracking-wide">
         Bonus gift cards
       </p>
-      <div className="bg-white border border-orange-100 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row gap-6 sm:gap-8">
-        <div className="flex-1 space-y-3">
-          <span className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-orange-600">
-            <Shield className="w-4 h-4" />
-            SpaceZ Rewards
-          </span>
-          <h3 className="text-xl sm:text-2xl font-semibold text-gray-900">
-            {BONUS_GIFTCARDS.title}
-          </h3>
-          <p className="text-sm sm:text-base text-gray-600">
-            {BONUS_GIFTCARDS.subtitle}
-          </p>
-          <button
-            onClick={handleClaimGiftCards}
-            className="inline-flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white font-semibold px-5 py-2.5 rounded-lg transition-colors"
+      <div className="space-y-3">
+        {BONUS_GIFTCARDS.map((giftCard) => (
+          <div
+            key={giftCard.id}
+            className="bg-white border border-orange-100 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row gap-6 sm:gap-8 transition-transform hover:-translate-y-1"
           >
-            {BONUS_GIFTCARDS.buttonLabel}
-          </button>
-        </div>
-        <div className="relative w-full sm:w-52">
-          <div className="rounded-2xl bg-linear-to-br from-blue-500 to-indigo-600 text-white px-5 py-4 shadow-lg">
-            <p className="text-xs uppercase tracking-widest text-white/70">
-              Bonus card
-            </p>
-            <p className="mt-4 text-2xl font-semibold">
-              {BONUS_GIFTCARDS.accent}
-            </p>
-            <div className="mt-6 flex items-center justify-between text-xs text-white/70">
-              <span>Valid on 50+ brands</span>
-              <Gift className="w-5 h-5" />
+            <div className="flex-1 space-y-3">
+              <span className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-orange-600">
+                <Shield className="w-4 h-4" />
+                SpaceZ Rewards
+              </span>
+              <h3 className="text-xl sm:text-2xl font-semibold text-gray-900">
+                {giftCard.title}
+              </h3>
+              <p className="text-sm sm:text-base text-gray-600">
+                {giftCard.subtitle}
+              </p>
+              <button
+                onClick={handleClaimGiftCards}
+                className="inline-flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white font-semibold px-5 py-2.5 rounded-lg transition-colors"
+              >
+                {giftCard.buttonLabel}
+              </button>
+            </div>
+            <div className="relative w-full sm:w-52">
+              <div
+                className={`rounded-2xl bg-gradient-to-br ${giftCard.gradient} text-white px-5 py-4 shadow-lg`}
+              >
+                <p className="text-xs uppercase tracking-widest text-white/70">
+                  Bonus card
+                </p>
+                <p className="mt-4 text-2xl font-semibold">{giftCard.accent}</p>
+                <div className="mt-6 flex items-center justify-between text-xs text-white/70">
+                  <span>Valid on {giftCard.brands}</span>
+                  <Gift className="w-5 h-5" />
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        ))}
       </div>
     </section>
   );
@@ -238,37 +295,47 @@ export default function OffersPage() {
       <p className="text-sm font-medium uppercase text-gray-500 tracking-wide">
         Payment offers
       </p>
-      <div className="bg-white border border-orange-100 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row gap-6 sm:gap-8">
-        <div className="flex-1 space-y-3">
-          <span className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-orange-600">
-            <Shield className="w-4 h-4" />
-            Payment savings
-          </span>
-          <h3 className="text-xl sm:text-2xl font-semibold text-gray-900">
-            {PAYMENT_OFFER.title}
-          </h3>
-          <p className="text-sm sm:text-base text-gray-600">
-            {PAYMENT_OFFER.subtitle}
-          </p>
-          <button
-            onClick={handleUnlockOffers}
-            className="inline-flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white font-semibold px-5 py-2.5 rounded-lg transition-colors"
+      <div className="space-y-3">
+        {PAYMENT_OFFERS.map((offer) => (
+          <div
+            key={offer.id}
+            className="bg-white border border-orange-100 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row gap-6 sm:gap-8 transition-transform hover:-translate-y-1"
           >
-            {PAYMENT_OFFER.buttonLabel}
-          </button>
-        </div>
-        <div className="relative w-full sm:w-52">
-          <div className="rounded-2xl bg-linear-to-br from-orange-400 via-orange-500 to-amber-500 text-white px-5 py-4 shadow-lg">
-            <p className="text-xs uppercase tracking-widest text-white/70">
-              Featured bank
-            </p>
-            <p className="mt-4 text-2xl font-semibold">Pay Swift</p>
-            <div className="mt-6 space-y-2 text-xs text-white/70">
-              <p>Extra cashback on first booking</p>
-              <p>No-cost EMI on premium stays</p>
+            <div className="flex-1 space-y-3">
+              <span className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-orange-600">
+                <Shield className="w-4 h-4" />
+                Payment savings
+              </span>
+              <h3 className="text-xl sm:text-2xl font-semibold text-gray-900">
+                {offer.title}
+              </h3>
+              <p className="text-sm sm:text-base text-gray-600">
+                {offer.subtitle}
+              </p>
+              <button
+                onClick={handleUnlockOffers}
+                className="inline-flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white font-semibold px-5 py-2.5 rounded-lg transition-colors"
+              >
+                {offer.buttonLabel}
+              </button>
+            </div>
+            <div className="relative w-full sm:w-52">
+              <div
+                className={`rounded-2xl bg-gradient-to-br ${offer.gradient} text-white px-5 py-4 shadow-lg`}
+              >
+                <p className="text-xs uppercase tracking-widest text-white/70">
+                  Featured bank
+                </p>
+                <p className="mt-4 text-2xl font-semibold">{offer.bankName}</p>
+                <div className="mt-6 space-y-2 text-xs text-white/70">
+                  {offer.features.map((feature, idx) => (
+                    <p key={idx}>{feature}</p>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        ))}
       </div>
     </section>
   );
@@ -306,98 +373,108 @@ export default function OffersPage() {
   };
 
   return (
-    <div className="relative px-4 sm:px-6 lg:px-8 py-6 pb-24 space-y-8">
-      <header className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-orange-500 text-white shadow-sm">
-            <Home className="w-5 h-5" />
-          </span>
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-orange-500">
-              SpaceZ
-            </p>
-            <h1 className="text-lg font-semibold text-gray-900">Offers</h1>
-          </div>
-        </div>
-        <div className="relative">
-          <button
-            aria-label="Menu"
-            onClick={() => setShowMenu((prev) => !prev)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm text-gray-600 hover:text-orange-600"
-          >
-            {showMenu ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-          {showMenu && (
-            <div className="absolute right-0 mt-3 w-48 rounded-2xl border border-orange-100 bg-white shadow-lg z-10 overflow-hidden">
-              <button
-                onClick={() => handleMenuAction("/")}
-                className="w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600"
-              >
-                Offers Home
-              </button>
-              <button
-                onClick={() => handleMenuAction("/bookings")}
-                className="w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600"
-              >
-                View Bookings
-              </button>
-              <button
-                onClick={() => handleMenuAction("/wallet")}
-                className="w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600"
-              >
-                Wallet
-              </button>
-              <button
-                onClick={() => handleMenuAction("/profile")}
-                className="w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600"
-              >
-                Profile
-              </button>
+    <div className="relative">
+      <header className="sticky top-0 z-40 bg-[#f7f0e6] px-4 sm:px-6 lg:px-8 py-4 border-b border-orange-100">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-orange-500 text-white shadow-sm">
+              <Home className="w-5 h-5" />
+            </span>
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-orange-500">
+                SpaceZ
+              </p>
+              <h1 className="text-lg font-semibold text-gray-900">Offers</h1>
             </div>
-          )}
+          </div>
+          <div className="relative">
+            <button
+              aria-label="Menu"
+              onClick={() => setShowMenu((prev) => !prev)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm text-gray-600 hover:text-orange-600"
+            >
+              {showMenu ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
+            </button>
+            {showMenu && (
+              <div className="absolute right-0 mt-3 w-48 rounded-2xl border border-orange-100 bg-white shadow-lg z-50 overflow-hidden">
+                <button
+                  onClick={() => handleMenuAction("/")}
+                  className="w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600"
+                >
+                  Offers Home
+                </button>
+                <button
+                  onClick={() => handleMenuAction("/bookings")}
+                  className="w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600"
+                >
+                  View Bookings
+                </button>
+                <button
+                  onClick={() => handleMenuAction("/wallet")}
+                  className="w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600"
+                >
+                  Wallet
+                </button>
+                <button
+                  onClick={() => handleMenuAction("/profile")}
+                  className="w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600"
+                >
+                  Profile
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
-      <section className="bg-white rounded-2xl border border-orange-100 p-5 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <p className="text-sm text-gray-500">
-              Sign in to unlock exclusive additional rewards
-            </p>
-          </div>
-          <button
-            onClick={handleSignIn}
-            className="inline-flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white font-semibold px-5 py-2.5 rounded-lg transition-colors"
-          >
-            Sign in
-          </button>
-        </div>
-        <div className="flex items-center gap-3 text-xs text-gray-400">
-          <Shield className="w-4 h-4" />
-          Safe and secure deals curated just for you
-        </div>
-      </section>
-
-      <div className="bg-white border border-gray-200 rounded-full p-1 shadow-inner flex">
-        {TABS.map((tab) => {
-          const isActive = activeTab === tab.id;
-          return (
+      <div className="px-4 sm:px-6 lg:px-8 py-6 pb-24 space-y-8">
+        <section className="bg-white rounded-2xl border border-orange-100 p-5 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <p className="text-sm text-gray-500">
+                Sign in to unlock exclusive additional rewards
+              </p>
+            </div>
             <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 rounded-full px-4 py-2 text-xs sm:text-sm font-medium transition-colors ${
-                isActive
-                  ? "bg-orange-500 text-white shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
+              onClick={handleSignIn}
+              className="inline-flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white font-semibold px-5 py-2.5 rounded-lg transition-colors"
             >
-              {tab.label}
+              Sign in
             </button>
-          );
-        })}
-      </div>
+          </div>
+          <div className="flex items-center gap-3 text-xs text-gray-400">
+            <Shield className="w-4 h-4" />
+            Safe and secure deals curated just for you
+          </div>
+        </section>
 
-      {renderTabContent()}
+        <div className="sticky top-[73px] z-30 bg-[#f7f0e6] pb-2">
+          <div className="bg-white border border-gray-200 rounded-full p-1 shadow-inner flex">
+            {TABS.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex-1 rounded-full px-4 py-2 text-xs sm:text-sm font-medium transition-colors ${
+                    isActive
+                      ? "bg-orange-500 text-white shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {renderTabContent()}
+      </div>
     </div>
   );
 }
