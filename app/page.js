@@ -1,16 +1,14 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Gift,
   Copy,
   Check,
-  Menu,
-  Home,
   Shield,
   ArrowUpRight,
-  X,
+  CheckCircle2,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Navbar from "./components/Navbar/page";
 
 const TABS = [
   { id: "coupons", label: "Coupons" },
@@ -121,11 +119,17 @@ const PAYMENT_OFFERS = [
 ];
 
 export default function OffersPage() {
-  const router = useRouter();
   const [activeTab, setActiveTab] = useState("coupons");
+  const [activeSection, setActiveSection] = useState("coupons");
   const [copiedCode, setCopiedCode] = useState(null);
   const [expandedOffer, setExpandedOffer] = useState(null);
-  const [showMenu, setShowMenu] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isAnimatingOut, setIsAnimatingOut] = useState(false);
+  const [showSignIn, setShowSignIn] = useState(true);
+  const couponsRef = useRef(null);
+  const giftcardsRef = useRef(null);
+  const paymentRef = useRef(null);
 
   const handleCopy = (code, id) => {
     navigator.clipboard.writeText(code);
@@ -133,337 +137,372 @@ export default function OffersPage() {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
+  const showSuccessModal = (message) => {
+    setSuccessMessage(message);
+    setIsAnimatingOut(false);
+    setShowSuccess(true);
+    setTimeout(() => {
+      setIsAnimatingOut(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        setIsAnimatingOut(false);
+      }, 300);
+    }, 2500);
+  };
+
   const handleSignIn = () => {
-    router.push("/profile");
+    showSuccessModal("Successfully signed in! 🎉");
+    setTimeout(() => {
+      setShowSignIn(false);
+    }, 500);
   };
 
   const handleClaimGiftCards = () => {
-    router.push("/wallet");
+    showSuccessModal("Gift cards claimed successfully! 🎁");
   };
 
   const handleUnlockOffers = () => {
-    router.push("/bookings");
+    showSuccessModal("Payment offers unlocked! 💳");
   };
 
   const toggleOfferDetails = (id) => {
     setExpandedOffer((prev) => (prev === id ? null : id));
   };
 
-  const handleMenuAction = (path) => {
-    setShowMenu(false);
-    router.push(path);
+  // ✅ Auto-highlight active tab on scroll with smooth animation
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY + 250;
+
+      const couponsSection = document.getElementById("coupons-section");
+      const giftcardsSection = document.getElementById("giftcards-section");
+      const paymentSection = document.getElementById("payment-section");
+
+      if (!couponsSection || !giftcardsSection || !paymentSection) return;
+
+      const couponsTop = couponsSection.offsetTop;
+      const giftcardsTop = giftcardsSection.offsetTop;
+      const paymentTop = paymentSection.offsetTop;
+
+      const sections = [
+        { id: "coupons", top: couponsTop },
+        { id: "giftcards", top: giftcardsTop },
+        { id: "payment", top: paymentTop },
+      ].sort((a, b) => a.top - b.top);
+
+      let currentSection = "coupons";
+      for (let i = sections.length - 1; i >= 0; i--) {
+        if (scrollPosition >= sections[i].top - 150) {
+          currentSection = sections[i].id;
+          break;
+        }
+      }
+
+      // ✅ Sync both tab & section highlight
+      setActiveSection(currentSection);
+      setActiveTab(currentSection);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    setTimeout(handleScroll, 100);
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const handleTabClick = (tabId) => {
+    setActiveTab(tabId);
+    setTimeout(() => {
+      const sectionId = `${tabId}-section`;
+      const section = document.getElementById(sectionId);
+      if (section) {
+        const headerOffset = 150;
+        const elementPosition = section.getBoundingClientRect().top;
+        const offsetPosition =
+          elementPosition + window.pageYOffset - headerOffset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: "smooth",
+        });
+      }
+    }, 100);
   };
 
-  const renderSiteCoupons = () => (
-    <section className="space-y-3">
-      <p className="text-sm font-medium uppercase text-gray-500 tracking-wide">
-        Sitewide coupons
-      </p>
-      <div className="space-y-3">
-        {SITE_COUPONS.map((offer) => (
-          <article
-            key={offer.id}
-            className="bg-white border border-orange-100 shadow-sm rounded-2xl overflow-hidden transition-transform hover:-translate-y-1"
-          >
-            <div className="flex">
-              <div
-                className={`bg-gradient-to-b ${offer.gradient} text-white w-16 sm:w-20 flex flex-col items-center justify-between py-4 sm:py-6`}
-              >
-                <span
-                  className="text-xs sm:text-sm font-semibold tracking-[0.3em] uppercase text-white/80"
-                  style={{
-                    writingMode: "vertical-rl",
-                    transform: "rotate(180deg)",
-                  }}
+  const renderSiteCoupons = () => {
+    const isActive = activeSection === "coupons";
+    return (
+      <section
+        ref={couponsRef}
+        id="coupons-section"
+        className="space-y-3 scroll-mt-32"
+      >
+        <p
+          className={`text-sm font-medium uppercase tracking-wide transition-colors duration-300 ${
+            isActive ? "text-orange-600 font-bold" : "text-gray-500"
+          }`}
+        >
+          Sitewide coupons
+        </p>
+        <div className="space-y-3">
+          {SITE_COUPONS.map((offer) => (
+            <article
+              key={offer.id}
+              className="bg-white border border-orange-100 shadow-sm rounded-2xl overflow-hidden transition-transform hover:-translate-y-1"
+            >
+              <div className="flex">
+                <div
+                  className={`bg-gradient-to-b ${offer.gradient} text-white w-16 sm:w-20 flex flex-col items-center justify-between py-4 sm:py-6`}
                 >
-                  {offer.highlight}
-                </span>
-                <span
-                  className="mt-4 text-base sm:text-lg font-bold"
-                  style={{
-                    writingMode: "vertical-rl",
-                    transform: "rotate(180deg)",
-                  }}
-                >
-                  {offer.amount}
-                </span>
-              </div>
-              <div className="flex-1 p-4 sm:p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
-                      {offer.title}
-                    </h3>
-                    <p className="mt-2 text-sm sm:text-base text-gray-600 leading-relaxed">
-                      {offer.description}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleCopy(offer.code, offer.id)}
-                    className="flex items-center gap-1 text-orange-600 text-sm font-medium"
-                    aria-label={`Copy code ${offer.code}`}
+                  <span
+                    className="text-xs sm:text-sm font-semibold tracking-[0.3em] uppercase text-white/80"
+                    style={{
+                      writingMode: "vertical-rl",
+                      transform: "rotate(180deg)",
+                    }}
                   >
-                    {copiedCode === offer.id ? (
-                      <>
-                        <Check className="w-4 h-4" />
-                        Copied
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4" />
-                        Copy
-                      </>
-                    )}
-                  </button>
-                </div>
-                <div className="mt-4 flex items-center justify-between">
-                  <span className="text-xs sm:text-sm font-medium text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
-                    Code: {offer.code}
+                    {offer.highlight}
                   </span>
-                  <button
-                    onClick={() => toggleOfferDetails(offer.id)}
-                    className="text-sm font-semibold text-orange-600 flex items-center gap-1"
+                  <span
+                    className="mt-4 text-base sm:text-lg font-bold"
+                    style={{
+                      writingMode: "vertical-rl",
+                      transform: "rotate(180deg)",
+                    }}
                   >
-                    {expandedOffer === offer.id ? "Hide details" : "Read more"}
-                    <ArrowUpRight className="w-3.5 h-3.5" />
-                  </button>
+                    {offer.amount}
+                  </span>
                 </div>
-                {expandedOffer === offer.id && (
-                  <div className="mt-4 rounded-xl border border-orange-100 bg-orange-50/60 px-4 py-3 text-sm text-gray-600">
-                    {offer.details}
+                <div className="flex-1 p-4 sm:p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
+                        {offer.title}
+                      </h3>
+                      <p className="mt-2 text-sm sm:text-base text-gray-600 leading-relaxed">
+                        {offer.description}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleCopy(offer.code, offer.id)}
+                      className="flex items-center gap-1 text-orange-600 text-sm font-medium"
+                    >
+                      {copiedCode === offer.id ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          Copied
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4" />
+                          Copy
+                        </>
+                      )}
+                    </button>
                   </div>
-                )}
+                  <div className="mt-4 flex items-center justify-between">
+                    <span className="text-xs sm:text-sm font-medium text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
+                      Code: {offer.code}
+                    </span>
+                    <button
+                      onClick={() => toggleOfferDetails(offer.id)}
+                      className="text-sm font-semibold text-orange-600 flex items-center gap-1"
+                    >
+                      {expandedOffer === offer.id
+                        ? "Hide details"
+                        : "Read more"}
+                      <ArrowUpRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  {expandedOffer === offer.id && (
+                    <div className="mt-4 rounded-xl border border-orange-100 bg-orange-50/60 px-4 py-3 text-sm text-gray-600">
+                      {offer.details}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
+            </article>
+          ))}
+        </div>
+      </section>
+    );
+  };
 
-  const renderGiftCards = () => (
-    <section className="space-y-3">
-      <p className="text-sm font-medium uppercase text-gray-500 tracking-wide">
-        Bonus gift cards
-      </p>
-      <div className="space-y-3">
-        {BONUS_GIFTCARDS.map((giftCard) => (
-          <div
-            key={giftCard.id}
-            className="bg-white border border-orange-100 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row gap-6 sm:gap-8 transition-transform hover:-translate-y-1"
-          >
-            <div className="flex-1 space-y-3">
-              <span className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-orange-600">
-                <Shield className="w-4 h-4" />
-                SpaceZ Rewards
-              </span>
-              <h3 className="text-xl sm:text-2xl font-semibold text-gray-900">
-                {giftCard.title}
-              </h3>
-              <p className="text-sm sm:text-base text-gray-600">
-                {giftCard.subtitle}
-              </p>
-              <button
-                onClick={handleClaimGiftCards}
-                className="inline-flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white font-semibold px-5 py-2.5 rounded-lg transition-colors"
-              >
-                {giftCard.buttonLabel}
-              </button>
-            </div>
-            <div className="relative w-full sm:w-52">
-              <div
-                className={`rounded-2xl bg-gradient-to-br ${giftCard.gradient} text-white px-5 py-4 shadow-lg`}
-              >
-                <p className="text-xs uppercase tracking-widest text-white/70">
-                  Bonus card
+  const renderGiftCards = () => {
+    const isActive = activeSection === "giftcards";
+    return (
+      <section
+        ref={giftcardsRef}
+        id="giftcards-section"
+        className="space-y-3 scroll-mt-32"
+      >
+        <p
+          className={`text-sm font-medium uppercase tracking-wide transition-colors duration-300 ${
+            isActive ? "text-orange-600 font-bold" : "text-gray-500"
+          }`}
+        >
+          Bonus gift cards
+        </p>
+        <div className="space-y-3">
+          {BONUS_GIFTCARDS.map((giftCard) => (
+            <div
+              key={giftCard.id}
+              className="bg-white border border-orange-100 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row gap-6 sm:gap-8 transition-transform hover:-translate-y-1"
+            >
+              <div className="flex-1 space-y-3">
+                <span className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-orange-600">
+                  <Shield className="w-4 h-4" />
+                  SpaceZ Rewards
+                </span>
+                <h3 className="text-xl sm:text-2xl font-semibold text-gray-900">
+                  {giftCard.title}
+                </h3>
+                <p className="text-sm sm:text-base text-gray-600">
+                  {giftCard.subtitle}
                 </p>
-                <p className="mt-4 text-2xl font-semibold">{giftCard.accent}</p>
-                <div className="mt-6 flex items-center justify-between text-xs text-white/70">
-                  <span>Valid on {giftCard.brands}</span>
-                  <Gift className="w-5 h-5" />
+                <button
+                  onClick={handleClaimGiftCards}
+                  className="inline-flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white font-semibold px-5 py-2.5 rounded-lg transition-colors"
+                >
+                  {giftCard.buttonLabel}
+                </button>
+              </div>
+              <div className="relative w-full sm:w-52">
+                <div
+                  className={`rounded-2xl bg-gradient-to-br ${giftCard.gradient} text-white px-5 py-4 shadow-lg`}
+                >
+                  <p className="text-xs uppercase tracking-widest text-white/70">
+                    Bonus card
+                  </p>
+                  <p className="mt-4 text-2xl font-semibold">
+                    {giftCard.accent}
+                  </p>
+                  <div className="mt-6 flex items-center justify-between text-xs text-white/70">
+                    <span>Valid on {giftCard.brands}</span>
+                    <Gift className="w-5 h-5" />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
+          ))}
+        </div>
+      </section>
+    );
+  };
 
-  const renderPaymentOffers = () => (
-    <section className="space-y-3">
-      <p className="text-sm font-medium uppercase text-gray-500 tracking-wide">
-        Payment offers
-      </p>
-      <div className="space-y-3">
-        {PAYMENT_OFFERS.map((offer) => (
-          <div
-            key={offer.id}
-            className="bg-white border border-orange-100 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row gap-6 sm:gap-8 transition-transform hover:-translate-y-1"
-          >
-            <div className="flex-1 space-y-3">
-              <span className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-orange-600">
-                <Shield className="w-4 h-4" />
-                Payment savings
-              </span>
-              <h3 className="text-xl sm:text-2xl font-semibold text-gray-900">
-                {offer.title}
-              </h3>
-              <p className="text-sm sm:text-base text-gray-600">
-                {offer.subtitle}
-              </p>
-              <button
-                onClick={handleUnlockOffers}
-                className="inline-flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white font-semibold px-5 py-2.5 rounded-lg transition-colors"
-              >
-                {offer.buttonLabel}
-              </button>
-            </div>
-            <div className="relative w-full sm:w-52">
-              <div
-                className={`rounded-2xl bg-gradient-to-br ${offer.gradient} text-white px-5 py-4 shadow-lg`}
-              >
-                <p className="text-xs uppercase tracking-widest text-white/70">
-                  Featured bank
+  const renderPaymentOffers = () => {
+    const isActive = activeSection === "payment";
+    return (
+      <section
+        ref={paymentRef}
+        id="payment-section"
+        className="space-y-3 scroll-mt-32"
+      >
+        <p
+          className={`text-sm font-medium uppercase tracking-wide transition-colors duration-300 ${
+            isActive ? "text-orange-600 font-bold" : "text-gray-500"
+          }`}
+        >
+          Payment offers
+        </p>
+        <div className="space-y-3">
+          {PAYMENT_OFFERS.map((offer) => (
+            <div
+              key={offer.id}
+              className="bg-white border border-orange-100 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row gap-6 sm:gap-8 transition-transform hover:-translate-y-1"
+            >
+              <div className="flex-1 space-y-3">
+                <span className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-orange-600">
+                  <Shield className="w-4 h-4" />
+                  Payment savings
+                </span>
+                <h3 className="text-xl sm:text-2xl font-semibold text-gray-900">
+                  {offer.title}
+                </h3>
+                <p className="text-sm sm:text-base text-gray-600">
+                  {offer.subtitle}
                 </p>
-                <p className="mt-4 text-2xl font-semibold">{offer.bankName}</p>
-                <div className="mt-6 space-y-2 text-xs text-white/70">
-                  {offer.features.map((feature, idx) => (
-                    <p key={idx}>{feature}</p>
-                  ))}
+                <button
+                  onClick={handleUnlockOffers}
+                  className="inline-flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white font-semibold px-5 py-2.5 rounded-lg transition-colors"
+                >
+                  {offer.buttonLabel}
+                </button>
+              </div>
+              <div className="relative w-full sm:w-52">
+                <div
+                  className={`rounded-2xl bg-gradient-to-br ${offer.gradient} text-white px-5 py-4 shadow-lg`}
+                >
+                  <p className="text-xs uppercase tracking-widest text-white/70">
+                    Featured bank
+                  </p>
+                  <p className="mt-4 text-2xl font-semibold">
+                    {offer.bankName}
+                  </p>
+                  <div className="mt-6 space-y-2 text-xs text-white/70">
+                    {offer.features.map((feature, idx) => (
+                      <p key={idx}>{feature}</p>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case "giftcards":
-        return (
-          <div className="space-y-6">
-            {renderGiftCards()}
-            <p className="text-center text-sm text-gray-500">
-              Explore curated gift cards to unlock more savings.
-            </p>
-          </div>
-        );
-      case "payment":
-        return (
-          <div className="space-y-6">
-            {renderPaymentOffers()}
-            <p className="text-center text-sm text-gray-500">
-              Choose your preferred payment method and save more.
-            </p>
-          </div>
-        );
-      case "coupons":
-      default:
-        return (
-          <div className="space-y-8">
-            {renderSiteCoupons()}
-            {renderGiftCards()}
-            {renderPaymentOffers()}
-          </div>
-        );
-    }
+          ))}
+        </div>
+      </section>
+    );
   };
 
   return (
     <div className="relative">
-      <header className="sticky top-0 z-40 bg-[#f7f0e6] px-4 sm:px-6 lg:px-8 py-4 border-b border-orange-100">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-orange-500 text-white shadow-sm">
-              <Home className="w-5 h-5" />
-            </span>
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-orange-500">
-                SpaceZ
-              </p>
-              <h1 className="text-lg font-semibold text-gray-900">Offers</h1>
-            </div>
-          </div>
-          <div className="relative">
-            <button
-              aria-label="Menu"
-              onClick={() => setShowMenu((prev) => !prev)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm text-gray-600 hover:text-orange-600"
-            >
-              {showMenu ? (
-                <X className="w-5 h-5" />
-              ) : (
-                <Menu className="w-5 h-5" />
-              )}
-            </button>
-            {showMenu && (
-              <div className="absolute right-0 mt-3 w-48 rounded-2xl border border-orange-100 bg-white shadow-lg z-50 overflow-hidden">
-                <button
-                  onClick={() => handleMenuAction("/")}
-                  className="w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600"
-                >
-                  Offers Home
-                </button>
-                <button
-                  onClick={() => handleMenuAction("/bookings")}
-                  className="w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600"
-                >
-                  View Bookings
-                </button>
-                <button
-                  onClick={() => handleMenuAction("/wallet")}
-                  className="w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600"
-                >
-                  Wallet
-                </button>
-                <button
-                  onClick={() => handleMenuAction("/profile")}
-                  className="w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600"
-                >
-                  Profile
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
+      <Navbar title="Offers" />
 
       <div className="px-4 sm:px-6 lg:px-8 py-6 pb-24 space-y-8">
-        <section className="bg-white rounded-2xl border border-orange-100 p-5 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <p className="text-sm text-gray-500">
-                Sign in to unlock exclusive additional rewards
-              </p>
+        {showSignIn && (
+          <section className="bg-white rounded-2xl border border-orange-100 p-5 shadow-sm space-y-4 transition-all duration-500">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <p className="text-sm text-gray-500">
+                  Sign in to unlock exclusive additional rewards
+                </p>
+              </div>
+              <button
+                onClick={handleSignIn}
+                className="inline-flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white font-semibold px-5 py-2.5 rounded-lg transition-colors"
+              >
+                Sign in
+              </button>
             </div>
-            <button
-              onClick={handleSignIn}
-              className="inline-flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white font-semibold px-5 py-2.5 rounded-lg transition-colors"
-            >
-              Sign in
-            </button>
-          </div>
-          <div className="flex items-center gap-3 text-xs text-gray-400">
-            <Shield className="w-4 h-4" />
-            Safe and secure deals curated just for you
-          </div>
-        </section>
+            <div className="flex items-center gap-3 text-xs text-gray-400">
+              <Shield className="w-4 h-4" />
+              Safe and secure deals curated just for you
+            </div>
+          </section>
+        )}
 
+        {/* Filter Bar */}
         <div className="sticky top-[73px] z-30 bg-[#f7f0e6] pb-2">
-          <div className="bg-white border border-gray-200 rounded-full p-1 shadow-inner flex">
+          <div className="bg-white border border-gray-200 rounded-full p-1 shadow-inner flex relative overflow-hidden">
+            {/* Animated orange background bubble */}
+            <div
+              className="absolute top-1 left-1 h-[calc(100%-0.5rem)] bg-orange-500 rounded-full transition-all duration-300 ease-in-out"
+              style={{
+                width: `${100 / TABS.length}%`,
+                transform: `translateX(${
+                  TABS.findIndex((t) => t.id === activeTab) * 100
+                }%)`,
+              }}
+            ></div>
+
             {TABS.map((tab) => {
               const isActive = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 rounded-full px-4 py-2 text-xs sm:text-sm font-medium transition-colors ${
+                  onClick={() => handleTabClick(tab.id)}
+                  className={`relative flex-1 z-10 text-center py-2 sm:py-2.5 text-sm sm:text-base font-semibold transition-all duration-300 ${
                     isActive
-                      ? "bg-orange-500 text-white shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
+                      ? "text-white scale-105"
+                      : "text-gray-600 hover:text-orange-600"
                   }`}
                 >
                   {tab.label}
@@ -473,8 +512,25 @@ export default function OffersPage() {
           </div>
         </div>
 
-        {renderTabContent()}
+        {/* Content */}
+        <div className="space-y-16">
+          {renderSiteCoupons()}
+          {renderGiftCards()}
+          {renderPaymentOffers()}
+        </div>
       </div>
+
+      {/* Success Modal with Animation */}
+      {showSuccess && (
+        <div
+          className={`fixed top-20 left-1/2 -translate-x-1/2 bg-orange-500 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 z-50 ${
+            isAnimatingOut ? "animate-fadeOutDown" : "animate-fadeInUp"
+          }`}
+        >
+          <CheckCircle2 className="w-5 h-5" />
+          <span className="font-medium">{successMessage}</span>
+        </div>
+      )}
     </div>
   );
 }
