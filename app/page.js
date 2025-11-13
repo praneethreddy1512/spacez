@@ -1,536 +1,629 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+
+import { useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
 import {
-  Gift,
+  ChevronRight,
   Copy,
-  Check,
-  Shield,
-  ArrowUpRight,
-  CheckCircle2,
+  Menu,
+  Search,
+  Heart,
+  MapPin,
+  User,
 } from "lucide-react";
-import Navbar from "./components/Navbar/page";
 
-const TABS = [
-  { id: "coupons", label: "Coupons" },
-  { id: "giftcards", label: "Giftcards" },
-  { id: "payment", label: "Payment Offers" },
-];
 
-const SITE_COUPONS = [
-  {
-    id: 1,
-    title: "LONGSTAY",
-    description:
-      "15% off when you book for 5 days or more and 20% off when you book for 30 days or more.",
-    code: "LONG50",
-    amount: "₹1,500",
-    highlight: "Sitewide coupons",
-    gradient: "from-orange-500 to-orange-600",
-    details:
-      "Applicable on select properties. Maximum discount capped at ₹2,500. Offer valid once per user.",
-  },
-  {
-    id: 2,
-    title: "EARLYBIRD",
-    description:
-      "15% off when you book for 5 days or more and 20% off when you book for 30 days or more.",
-    code: "EARLY40",
-    amount: "₹3,000",
-    highlight: "Sitewide coupons",
-    gradient: "from-amber-600 to-orange-500",
-    details:
-      "Book a minimum of 20 days in advance to redeem this offer. Not combinable with other coupons.",
-  },
-  {
-    id: 3,
-    title: "RUSHDEAL",
-    description:
-      "15% off when you book for 5 days or more and 20% off when you book for 30 days or more.",
-    code: "RUSH25",
-    amount: "Flat 10%",
-    highlight: "Sitewide coupons",
-    gradient: "from-rose-500 to-orange-600",
-    details:
-      "Valid on weekend stays only. Limited redemptions per day. Taxes and fees apply on discounted amount.",
-  },
-];
+const PRIMARY = "#C16B3E";
 
-const BONUS_GIFTCARDS = [
-  {
-    id: 1,
-    title: "Assured vouchers up to ₹1000+",
-    subtitle: "of trending brands",
-    buttonLabel: "Claim gift cards »",
-    accent: "₹400 Gift card",
-    gradient: "from-blue-500 to-indigo-600",
-    brands: "50+ brands",
-  },
-  {
-    id: 2,
-    title: "Premium dining vouchers",
-    subtitle: "Enjoy fine dining experiences",
-    buttonLabel: "Claim gift cards »",
-    accent: "₹600 Gift card",
-    gradient: "from-purple-500 to-pink-600",
-    brands: "30+ restaurants",
-  },
-  {
-    id: 3,
-    title: "Shopping spree vouchers",
-    subtitle: "Shop at your favorite stores",
-    buttonLabel: "Claim gift cards »",
-    accent: "₹500 Gift card",
-    gradient: "from-green-500 to-emerald-600",
-    brands: "40+ stores",
-  },
-];
+export default function Page() {
+  const [activeTab, setActiveTab] = useState("giftcards");
 
-const PAYMENT_OFFERS = [
-  {
-    id: 1,
-    title: "Save more on your bookings",
-    subtitle: "up to 15% Off on select payment methods",
-    buttonLabel: "Unlock offers »",
-    bankName: "Pay Swift",
-    features: [
-      "Extra cashback on first booking",
-      "No-cost EMI on premium stays",
-    ],
-    gradient: "from-orange-400 via-orange-500 to-amber-500",
-  },
-  {
-    id: 2,
-    title: "UPI payment benefits",
-    subtitle: "Get instant discounts on UPI payments",
-    buttonLabel: "Unlock offers »",
-    bankName: "UPI Pay",
-    features: ["10% instant discount", "Cashback on every transaction"],
-    gradient: "from-blue-400 via-blue-500 to-cyan-500",
-  },
-  {
-    id: 3,
-    title: "Credit card exclusive",
-    subtitle: "Special offers for credit card users",
-    buttonLabel: "Unlock offers »",
-    bankName: "Card Plus",
-    features: ["15% cashback", "Zero interest on EMI"],
-    gradient: "from-indigo-400 via-indigo-500 to-purple-500",
-  },
-];
+  const coupons = [
+    {
+      discount: "₹1,500",
+      code: "LONGSTAY",
+      description:
+        "15% off when you book for 5 days or more and 20% off when you book for 30 days or more.",
+    },
+    {
+      discount: "₹3,000",
+      code: "EARLYBIRD",
+      description:
+        "15% off when you book for 5 days or more and 20% off when you book for 30 days or more.",
+    },
+    {
+      discount: "Flat 10%",
+      code: "RUSHDEAL",
+      description:
+        "15% off when you book for 5 days or more and 20% off when you book for 30 days or more.",
+    },
+  ];
 
-export default function OffersPage() {
-  const [activeTab, setActiveTab] = useState("coupons");
-  const [activeSection, setActiveSection] = useState("coupons");
-  const [copiedCode, setCopiedCode] = useState(null);
-  const [expandedOffer, setExpandedOffer] = useState(null);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
-  const [isAnimatingOut, setIsAnimatingOut] = useState(false);
-  const [showSignIn, setShowSignIn] = useState(true);
-  const couponsRef = useRef(null);
-  const giftcardsRef = useRef(null);
-  const paymentRef = useRef(null);
+  const showToast = (msg) => toast.success(msg, { duration: 2200 });
 
-  const handleCopy = (code, id) => {
-    navigator.clipboard.writeText(code);
-    setCopiedCode(id);
-    setTimeout(() => setCopiedCode(null), 2000);
-  };
-
-  const showSuccessModal = (message) => {
-    setSuccessMessage(message);
-    setIsAnimatingOut(false);
-    setShowSuccess(true);
-    setTimeout(() => {
-      setIsAnimatingOut(true);
-      setTimeout(() => {
-        setShowSuccess(false);
-        setIsAnimatingOut(false);
-      }, 300);
-    }, 2500);
-  };
-
-  const handleSignIn = () => {
-    showSuccessModal("Successfully signed in! 🎉");
-    setTimeout(() => {
-      setShowSignIn(false);
-    }, 500);
+  const handleCopy = async (code) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      showToast("Copied!");
+    } catch (err) {
+      // fallback
+      showToast("Copied (manual)!");
+    }
   };
 
   const handleClaimGiftCards = () => {
-    showSuccessModal("Gift cards claimed successfully! 🎁");
+    showToast("Gift cards claimed!");
   };
 
   const handleUnlockOffers = () => {
-    showSuccessModal("Payment offers unlocked! 💳");
-  };
-
-  const toggleOfferDetails = (id) => {
-    setExpandedOffer((prev) => (prev === id ? null : id));
-  };
-
-  // ✅ Auto-highlight active tab on scroll with smooth animation
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollPosition = window.scrollY + 250;
-
-      const couponsSection = document.getElementById("coupons-section");
-      const giftcardsSection = document.getElementById("giftcards-section");
-      const paymentSection = document.getElementById("payment-section");
-
-      if (!couponsSection || !giftcardsSection || !paymentSection) return;
-
-      const couponsTop = couponsSection.offsetTop;
-      const giftcardsTop = giftcardsSection.offsetTop;
-      const paymentTop = paymentSection.offsetTop;
-
-      const sections = [
-        { id: "coupons", top: couponsTop },
-        { id: "giftcards", top: giftcardsTop },
-        { id: "payment", top: paymentTop },
-      ].sort((a, b) => a.top - b.top);
-
-      let currentSection = "coupons";
-      for (let i = sections.length - 1; i >= 0; i--) {
-        if (scrollPosition >= sections[i].top - 150) {
-          currentSection = sections[i].id;
-          break;
-        }
-      }
-
-      // ✅ Sync both tab & section highlight
-      setActiveSection(currentSection);
-      setActiveTab(currentSection);
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    setTimeout(handleScroll, 100);
-
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const handleTabClick = (tabId) => {
-    setActiveTab(tabId);
-    setTimeout(() => {
-      const sectionId = `${tabId}-section`;
-      const section = document.getElementById(sectionId);
-      if (section) {
-        const headerOffset = 150;
-        const elementPosition = section.getBoundingClientRect().top;
-        const offsetPosition =
-          elementPosition + window.pageYOffset - headerOffset;
-
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: "smooth",
-        });
-      }
-    }, 100);
-  };
-
-  const renderSiteCoupons = () => {
-    const isActive = activeSection === "coupons";
-    return (
-      <section
-        ref={couponsRef}
-        id="coupons-section"
-        className="space-y-3 scroll-mt-32"
-      >
-        <p
-          className={`text-sm font-medium uppercase tracking-wide transition-colors duration-300 ${
-            isActive ? "text-orange-600 font-bold" : "text-gray-500"
-          }`}
-        >
-          Sitewide coupons
-        </p>
-        <div className="space-y-3">
-          {SITE_COUPONS.map((offer) => (
-            <article
-              key={offer.id}
-              className="bg-white border border-orange-100 shadow-sm rounded-2xl overflow-hidden transition-transform hover:-translate-y-1"
-            >
-              <div className="flex">
-                <div
-                  className={`bg-gradient-to-b ${offer.gradient} text-white w-16 sm:w-20 flex flex-col items-center justify-between py-4 sm:py-6`}
-                >
-                  <span
-                    className="text-xs sm:text-sm font-semibold tracking-[0.3em] uppercase text-white/80"
-                    style={{
-                      writingMode: "vertical-rl",
-                      transform: "rotate(180deg)",
-                    }}
-                  >
-                    {offer.highlight}
-                  </span>
-                  <span
-                    className="mt-4 text-base sm:text-lg font-bold"
-                    style={{
-                      writingMode: "vertical-rl",
-                      transform: "rotate(180deg)",
-                    }}
-                  >
-                    {offer.amount}
-                  </span>
-                </div>
-                <div className="flex-1 p-4 sm:p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
-                        {offer.title}
-                      </h3>
-                      <p className="mt-2 text-sm sm:text-base text-gray-600 leading-relaxed">
-                        {offer.description}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => handleCopy(offer.code, offer.id)}
-                      className="flex items-center gap-1 text-orange-600 text-sm font-medium"
-                    >
-                      {copiedCode === offer.id ? (
-                        <>
-                          <Check className="w-4 h-4" />
-                          Copied
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-4 h-4" />
-                          Copy
-                        </>
-                      )}
-                    </button>
-                  </div>
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="text-xs sm:text-sm font-medium text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
-                      Code: {offer.code}
-                    </span>
-                    <button
-                      onClick={() => toggleOfferDetails(offer.id)}
-                      className="text-sm font-semibold text-orange-600 flex items-center gap-1"
-                    >
-                      {expandedOffer === offer.id
-                        ? "Hide details"
-                        : "Read more"}
-                      <ArrowUpRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  {expandedOffer === offer.id && (
-                    <div className="mt-4 rounded-xl border border-orange-100 bg-orange-50/60 px-4 py-3 text-sm text-gray-600">
-                      {offer.details}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-    );
-  };
-
-  const renderGiftCards = () => {
-    const isActive = activeSection === "giftcards";
-    return (
-      <section
-        ref={giftcardsRef}
-        id="giftcards-section"
-        className="space-y-3 scroll-mt-32"
-      >
-        <p
-          className={`text-sm font-medium uppercase tracking-wide transition-colors duration-300 ${
-            isActive ? "text-orange-600 font-bold" : "text-gray-500"
-          }`}
-        >
-          Bonus gift cards
-        </p>
-        <div className="space-y-3">
-          {BONUS_GIFTCARDS.map((giftCard) => (
-            <div
-              key={giftCard.id}
-              className="bg-white border border-orange-100 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row gap-6 sm:gap-8 transition-transform hover:-translate-y-1"
-            >
-              <div className="flex-1 space-y-3">
-                <span className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-orange-600">
-                  <Shield className="w-4 h-4" />
-                  SpaceZ Rewards
-                </span>
-                <h3 className="text-xl sm:text-2xl font-semibold text-gray-900">
-                  {giftCard.title}
-                </h3>
-                <p className="text-sm sm:text-base text-gray-600">
-                  {giftCard.subtitle}
-                </p>
-                <button
-                  onClick={handleClaimGiftCards}
-                  className="inline-flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white font-semibold px-5 py-2.5 rounded-lg transition-colors"
-                >
-                  {giftCard.buttonLabel}
-                </button>
-              </div>
-              <div className="relative w-full sm:w-52">
-                <div
-                  className={`rounded-2xl bg-gradient-to-br ${giftCard.gradient} text-white px-5 py-4 shadow-lg`}
-                >
-                  <p className="text-xs uppercase tracking-widest text-white/70">
-                    Bonus card
-                  </p>
-                  <p className="mt-4 text-2xl font-semibold">
-                    {giftCard.accent}
-                  </p>
-                  <div className="mt-6 flex items-center justify-between text-xs text-white/70">
-                    <span>Valid on {giftCard.brands}</span>
-                    <Gift className="w-5 h-5" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-    );
-  };
-
-  const renderPaymentOffers = () => {
-    const isActive = activeSection === "payment";
-    return (
-      <section
-        ref={paymentRef}
-        id="payment-section"
-        className="space-y-3 scroll-mt-32"
-      >
-        <p
-          className={`text-sm font-medium uppercase tracking-wide transition-colors duration-300 ${
-            isActive ? "text-orange-600 font-bold" : "text-gray-500"
-          }`}
-        >
-          Payment offers
-        </p>
-        <div className="space-y-3">
-          {PAYMENT_OFFERS.map((offer) => (
-            <div
-              key={offer.id}
-              className="bg-white border border-orange-100 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row gap-6 sm:gap-8 transition-transform hover:-translate-y-1"
-            >
-              <div className="flex-1 space-y-3">
-                <span className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-orange-600">
-                  <Shield className="w-4 h-4" />
-                  Payment savings
-                </span>
-                <h3 className="text-xl sm:text-2xl font-semibold text-gray-900">
-                  {offer.title}
-                </h3>
-                <p className="text-sm sm:text-base text-gray-600">
-                  {offer.subtitle}
-                </p>
-                <button
-                  onClick={handleUnlockOffers}
-                  className="inline-flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white font-semibold px-5 py-2.5 rounded-lg transition-colors"
-                >
-                  {offer.buttonLabel}
-                </button>
-              </div>
-              <div className="relative w-full sm:w-52">
-                <div
-                  className={`rounded-2xl bg-gradient-to-br ${offer.gradient} text-white px-5 py-4 shadow-lg`}
-                >
-                  <p className="text-xs uppercase tracking-widest text-white/70">
-                    Featured bank
-                  </p>
-                  <p className="mt-4 text-2xl font-semibold">
-                    {offer.bankName}
-                  </p>
-                  <div className="mt-6 space-y-2 text-xs text-white/70">
-                    {offer.features.map((feature, idx) => (
-                      <p key={idx}>{feature}</p>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-    );
+    showToast("Offers unlocked!");
   };
 
   return (
-    <div className="relative">
-      <Navbar title="Offers" />
+    <div className="min-h-screen bg-white pb-[76px]">
+      <StatusBar />
+      <Header />
 
-      <div className="px-4 sm:px-6 lg:px-8 py-6 pb-24 space-y-8">
-        {showSignIn && (
-          <section className="bg-white rounded-2xl border border-orange-100 p-5 shadow-sm space-y-4 transition-all duration-500">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <p className="text-sm text-gray-500">
-                  Sign in to unlock exclusive additional rewards
-                </p>
-              </div>
+      <main className="pt-7 flex flex-col gap-0 max-w-[1200px] mx-auto">
+        <div className="px-6 mb-4">
+          <h1 className="font-lexend font-[634] text-[20px] leading-7 tracking-[-0.25px] text-[#4B4E4B]">
+            Offers
+          </h1>
+        </div>
+
+        <div className="px-6 py-4 flex flex-col gap-3 mb-0">
+          <p className="font-lexend font-[326] text-sm leading-5 text-[#4B4E4B]">
+            Sign in to unlock exclusive additional rewards
+          </p>
+          <button
+            onClick={() => showToast("Sign in (coming soon)")}
+            style={{
+              background: PRIMARY,
+              color: "#fff",
+            }}
+            aria-label="Sign in"
+            className="w-full bg-[#C16B3E] text-white rounded-sm px-4 py-2 font-lexend font-[326] text-base leading-6 min-h-[40px]"
+          >
+            Sign in
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="px-6 border-b border-[#E5E6E5]">
+          <div className="flex justify-between items-center">
+            {[
+              { id: "coupons", label: "Coupons" },
+              { id: "giftcards", label: "Giftcards" },
+              { id: "payment", label: "Payment Offers" },
+            ].map((tab) => (
               <button
-                onClick={handleSignIn}
-                className="inline-flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white font-semibold px-5 py-2.5 rounded-lg transition-colors"
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex flex-col items-center justify-center py-3 pb-2 flex-1 ${
+                  activeTab === tab.id
+                    ? "border-b-2 border-[#4B4E4B]"
+                    : "border-b-[0.64px] border-[#E5E6E5]"
+                }`}
               >
-                Sign in
+                <span
+                  className={`font-lexend text-xs leading-[18px] ${
+                    activeTab === tab.id
+                      ? "font-[634] text-[#4B4E4B]"
+                      : "font-[326] text-[#7D817D]"
+                  }`}
+                >
+                  {tab.label}
+                </span>
               </button>
-            </div>
-            <div className="flex items-center gap-3 text-xs text-gray-400">
-              <Shield className="w-4 h-4" />
-              Safe and secure deals curated just for you
+            ))}
+          </div>
+        </div>
+
+        {/* Giftcards tab (default) */}
+        {activeTab === "giftcards" && (
+          <>
+            <section className="px-6 py-6 flex flex-col gap-4">
+              <h2 className="font-lexend font-[634] text-base leading-[22px] text-[#4B4E4B]">
+                Sitewide coupons:
+              </h2>
+              <div className="flex flex-col gap-4">
+                {coupons.map((c, i) => (
+                  <CouponCard
+                    key={i}
+                    {...c}
+                    onCopy={() => handleCopy(c.code)}
+                  />
+                ))}
+              </div>
+            </section>
+
+            <section className="px-6 flex flex-col gap-4 mb-6">
+              <h2 className="font-lexend font-[634] text-base leading-[22px] text-[#4B4E4B]">
+                Bonus gift cards:
+              </h2>
+              {/* Myntra Gift Voucher */}
+<div className="flex w-full items-stretch">
+  <div
+    className="flex flex-col justify-center items-center px-3 py-6 bg-[#E6007E] text-white"
+    style={{ minWidth: 90 }}
+  >
+    <div
+      className="font-bold whitespace-nowrap text-center"
+      style={{
+        transform: 'rotate(-90deg)',
+        transformOrigin: 'center center',
+        fontSize: '24px',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+      }}
+    >
+      ₹1500
+    </div>
+  </div>
+
+  <div className="flex flex-col flex-1 px-5 py-5 pb-4 bg-[#FFF8F9] border-l-2 border-dashed border-[#E6007E] gap-2.5">
+    <div className="flex items-center justify-between pr-1.5">
+      <div className="flex items-center gap-2">
+        <img
+          src={"/myntra.png"}
+          alt="Myntra Logo"
+          className="w-6 h-6"
+        />
+        <h3 className="font-lexend font-[634] text-lg leading-6 text-[#4B4E4B]">
+          MYNTRA
+        </h3>
+      </div>
+      <button className="text-[#C16B3E] font-lexend font-[634] text-base"  onClick={() => toast.success('Myntra voucher collected!')}>
+        Collect
+      </button>
+    </div>
+
+    <p className="font-lexend font-[326] text-sm leading-5 text-[#7D817D]">
+      Get this gift voucher on booking above ₹2000
+    </p>
+
+    <div className="h-[1px] bg-[#E5E6E5] w-full" />
+
+    <button className="font-lexend font-[634] text-sm leading-5 text-[#7D817D] text-left py-1">
+      Read more
+    </button>
+  </div>
+</div>
+
+{/* Hammer Gift Voucher */}
+<div className="flex w-full items-stretch">
+  <div
+    className="flex flex-col justify-center items-center px-3 py-6 bg-black text-white"
+    style={{ minWidth: 90 }}
+  >
+    <div
+      className="font-bold whitespace-nowrap text-center"
+      style={{
+        transform: 'rotate(-90deg)',
+        transformOrigin: 'center center',
+        fontSize: '24px',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+      }}
+    >
+      ₹1000
+    </div>
+  </div>
+
+  <div className="flex flex-col flex-1 px-5 py-5 pb-4 bg-[#FDFDFD] border-l-2 border-dashed border-black gap-2.5">
+    <div className="flex items-center justify-between pr-1.5">
+      <div className="flex items-center gap-2">
+        <img
+          src={"/hammer.png"}
+          alt="Hammer Logo"
+          className="w-6 h-6 bg-black p-1 rounded"
+        />
+        <h3 className="font-lexend font-[634] text-lg leading-6 text-[#4B4E4B]">
+          HAMMER
+        </h3>
+      </div>
+      <button className="text-[#C16B3E] font-lexend font-[634] text-base" onClick={()=>toast.success("Hammer voucher collected!")}>
+        Collect
+      </button>
+    </div>
+
+    <p className="font-lexend font-[326] text-sm leading-5 text-[#7D817D]">
+      Get this gift voucher on booking above ₹1500
+    </p>
+
+    <div className="h-[1px] bg-[#E5E6E5] w-full" />
+
+    <button className="font-lexend font-[634] text-sm leading-5 text-[#7D817D] text-left py-1">
+      Read more
+    </button>
+  </div>
+</div>
+
+              <div className="relative bg-[#FDF9F7] p-4 pr-2 flex items-center gap-3 min-h-[100px]">
+                <div className="flex flex-col gap-1 flex-1">
+                  <div className="font-lexend text-[#874B2C]">
+                    <span className="font-[634] text-sm">
+                      Assured vouchers up to{" "}
+                    </span>
+                    <span className="font-bold text-2xl">₹1000</span>
+                    <span className="text-[28px]">✨</span>
+                  </div>
+                  <p className="font-lexend font-[326] text-sm leading-5 text-[#4B4E4B]">
+                    of trending brands
+                  </p>
+                </div>
+                <div className="relative w-[125px] h-[111px] flex-shrink-0 -mr-2">
+                  {/* SVG cards (kept same look) */}
+                  <svg
+                    className="absolute top-0 left-[14px] w-[100px] h-[59px]"
+                    viewBox="0 0 102 62"
+                    fill="none"
+                  >
+                    <rect
+                      x="1.31177"
+                      width="99.9989"
+                      height="59.2586"
+                      rx="3.70366"
+                      transform="rotate(1.26841 1.31177 0)"
+                      fill="url(#paint0_linear)"
+                    />
+                    <text
+                      transform="translate(8.55353 7.56934) rotate(1.26841)"
+                      fill="white"
+                      style={{ whiteSpace: "pre" }}
+                      fontFamily="Inter"
+                      fontSize="14.8146"
+                      fontWeight="bold"
+                    >
+                      <tspan x="0" y="14.3871">
+                        ₹400
+                      </tspan>
+                    </text>
+                    <text
+                      transform="translate(8.22565 22.3805) rotate(1.26841)"
+                      fill="white"
+                      fillOpacity="0.6"
+                      style={{ whiteSpace: "pre" }}
+                      fontFamily="Inter"
+                      fontSize="11.111"
+                      fontWeight="300"
+                    >
+                      <tspan x="0" y="10.5404">
+                        Gift card
+                      </tspan>
+                    </text>
+                    <defs>
+                      <linearGradient
+                        id="paint0_linear"
+                        x1="1.16237"
+                        y1="29.9074"
+                        x2="101.621"
+                        y2="29.9074"
+                        gradientUnits="userSpaceOnUse"
+                      >
+                        <stop stopColor="#EA7611" />
+                        <stop offset="1" stopColor="#F25B1B" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+
+                  <svg
+                    className="absolute top-[33px] left-0 w-[122px] h-[72px]"
+                    viewBox="0 0 126 79"
+                    fill="none"
+                  >
+                    <rect
+                      y="6.00903"
+                      width="121.664"
+                      height="72.0972"
+                      rx="4.50608"
+                      transform="rotate(-2.83101 0 6.00903)"
+                      fill="url(#paint1_linear)"
+                    />
+                    <text
+                      transform="translate(9.44641 14.5653) rotate(-2.83101)"
+                      fill="white"
+                      style={{ whiteSpace: "pre" }}
+                      fontFamily="Inter"
+                      fontSize="18.0243"
+                      fontWeight="bold"
+                    >
+                      <tspan x="0" y="17.5543">
+                        ₹500
+                      </tspan>
+                    </text>
+                    <text
+                      transform="translate(10.3365 32.5675) rotate(-2.83101)"
+                      fill="white"
+                      fillOpacity="0.6"
+                      style={{ whiteSpace: "pre" }}
+                      fontFamily="Inter"
+                      fontSize="13.5182"
+                      fontWeight="300"
+                    >
+                      <tspan x="0" y="12.9157">
+                        Gift card
+                      </tspan>
+                    </text>
+                    <defs>
+                      <linearGradient
+                        id="paint1_linear"
+                        x1="-0.18177"
+                        y1="42.396"
+                        x2="122.041"
+                        y2="42.396"
+                        gradientUnits="userSpaceOnUse"
+                      >
+                        <stop stopColor="#196CD9" />
+                        <stop offset="1" stopColor="#0D3973" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
+              </div>
+
+              <button
+                onClick={handleClaimGiftCards}
+                className="w-full bg-[#C16B3E] text-white rounded-sm px-4 py-2 font-lexend font-[326] text-base leading-6 min-h-[40px]"
+              >
+                Claim gift cards »
+              </button>
+            </section>
+
+            <section className="px-6 flex flex-col gap-4">
+              <h2 className="font-lexend font-[634] text-base leading-[22px] text-[#4B4E4B]">
+                Payment offers:
+              </h2>
+              <div className="bg-[#FDF9F7] p-3 pr-4 flex items-center gap-3">
+                <div className="flex flex-col gap-1 flex-1">
+                  <p className="font-lexend font-[326] text-sm leading-5 text-[#4B4E4B]">
+                    Save more on your bookings
+                  </p>
+                  <div className="font-lexend text-[#874B2C]">
+                    <span className="font-[634] text-2xl leading-5">
+                      upto 15% Off
+                    </span>
+                    <br />
+                    <span className="font-[634] text-sm">
+                      on select payment methods
+                    </span>
+                  </div>
+                </div>
+                <div className="w-[81px] h-[74px] flex-shrink-0 relative">
+                  <div className="absolute right-0 top-[3px] w-[72px] h-[72px] rounded-[14px] bg-[#C16B3E]/10" />
+                  <img
+                    src="https://api.builder.io/api/v1/image/assets/TEMP/ba265a2e8d529d41705475b63239d0b78e2516b2?width=162"
+                    alt="Payment methods"
+                    className="absolute left-0 top-0 w-[81px] h-[70px]"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={handleUnlockOffers}
+                className="w-full bg-[#C16B3E] text-white rounded-sm px-4 py-2 font-lexend font-[326] text-base leading-6 min-h-[40px] flex items-center justify-center gap-1"
+              >
+                <span>Unlock offers</span>
+                <ChevronRight className="w-5 h-5" strokeWidth={2} />
+                <ChevronRight className="w-5 h-5 -ml-3" strokeWidth={2} />
+              </button>
+            </section>
+          </>
+        )}
+
+        {/* Coupons tab */}
+        {activeTab === "coupons" && (
+          <section className="px-4 py-6 flex flex-col gap-4">
+            <h2 className="font-lexend font-[634] text-base leading-[22px] text-[#4B4E4B]">
+              Sitewide coupons:
+            </h2>
+            <div className="flex flex-col gap-4">
+              {coupons.map((c, i) => (
+                <CouponCard key={i} {...c} onCopy={() => handleCopy(c.code)} />
+              ))}
             </div>
           </section>
         )}
 
-        {/* Filter Bar */}
-        <div className="sticky top-[73px] z-30 bg-[#f7f0e6] pb-2">
-          <div className="bg-white border border-gray-200 rounded-full p-1 shadow-inner flex relative overflow-hidden">
-            {/* Animated orange background bubble */}
-            <div
-              className="absolute top-1 left-1 h-[calc(100%-0.5rem)] bg-orange-500 rounded-full transition-all duration-300 ease-in-out"
-              style={{
-                width: `${100 / TABS.length}%`,
-                transform: `translateX(${
-                  TABS.findIndex((t) => t.id === activeTab) * 100
-                }%)`,
-              }}
-            ></div>
+        {/* Payment tab */}
+        {activeTab === "payment" && (
+          <section className="px-6 py-6 flex flex-col gap-4">
+            <h2 className="font-lexend font-[634] text-base leading-[22px] text-[#4B4E4B]">
+              Payment offers:
+            </h2>
+            {/* HDFC Bank Offer Card */}
+<div className="flex w-full items-stretch">
+  <div
+    className="flex flex-col justify-center items-center px-3 py-6 bg-[#1746A2] text-white"
+    style={{ minWidth: 90 }}
+  >
+    <div
+      className="font-[Libre_Caslon_Text] font-semibold text-[32px] leading-[120%] tracking-[0] uppercase"
+      style={{
+        transform: 'rotate(-90deg)',
+        transformOrigin: 'center center',
+        fontSize: '22px',
+        fontFamily: 'system-ui, -apple-system, sans-serif'
+      }}
+    >
+      10% OFF
+    </div>
+  </div>
 
-            {TABS.map((tab) => {
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabClick(tab.id)}
-                  className={`relative flex-1 z-10 text-center py-2 sm:py-2.5 text-sm sm:text-base font-semibold transition-all duration-300 ${
-                    isActive
-                      ? "text-white scale-105"
-                      : "text-gray-600 hover:text-orange-600"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+  <div className="flex flex-col flex-1 px-5 py-5 pb-4 bg-[#FDF9F7] border-l-2 border-dashed border-[#1746A2] gap-2.5">
+    <div className="flex items-center gap-2 mb-1">
+      <img
+        src={"/hdfc.png"}
+        alt="HDFC Bank Logo"
+        className="w-6 h-6"
+      />
+      <h3 className="font-lexend font-[634] text-lg leading-6 text-[#4B4E4B]">
+        HDFC BANK
+      </h3>
+    </div>
 
-        {/* Content */}
-        <div className="space-y-16">
-          {renderSiteCoupons()}
-          {renderGiftCards()}
-          {renderPaymentOffers()}
-        </div>
+    <p className="font-lexend font-[326] text-sm leading-5 text-[#7D817D]">
+      Get 10% off on booking above ₹1500
+    </p>
+
+    <div className="h-[1px] bg-[#E5E6E5] w-full" />
+
+    <button className="font-lexend font-[634] text-sm leading-5 text-[#7D817D] text-left py-1">
+      Read more
+    </button>
+  </div>
+</div>
+
+            <div className="bg-[#FDF9F7] p-3 pr-4 flex items-center gap-3">
+              <div className="flex flex-col gap-1 flex-1">
+                <p className="font-lexend font-[326] text-sm leading-5 text-[#4B4E4B]">
+                  Save more on your bookings
+                </p>
+                <div className="font-lexend text-[#874B2C]">
+                  <span className="font-[634] text-2xl leading-5">
+                    upto 15% Off
+                  </span>
+                  <br />
+                  <span className="font-[634] text-sm">
+                    on select payment methods
+                  </span>
+                </div>
+              </div>
+              <div className="w-[81px] h-[74px] flex-shrink-0 relative">
+                <div className="absolute right-0 top-[3px] w-[72px] h-[72px] rounded-[14px] bg-[#C16B3E]/10" />
+                <img
+                  src="https://api.builder.io/api/v1/image/assets/TEMP/ba265a2e8d529d41705475b63239d0b78e2516b2?width=162"
+                  alt="Payment methods"
+                  className="absolute left-0 top-0 w-[81px] h-[70px]"
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={handleUnlockOffers}
+              className="w-full bg-[#C16B3E] text-white rounded-sm px-4 py-2 font-lexend font-[326] text-base leading-6 min-h-[40px] flex items-center justify-center gap-1"
+            >
+              <span>Unlock offers</span>
+              <ChevronRight className="w-5 h-5" strokeWidth={2} />
+              <ChevronRight className="w-5 h-5 -ml-3" strokeWidth={2} />
+            </button>
+          </section>
+        )}
+      </main>
+
+      <Toaster position="top-center" />
+
+    </div>
+  );
+}
+
+
+function CouponCard({ discount, code, description, onCopy }) {
+  return (
+    <div className="flex w-full items-stretch">
+      <div
+        className="flex flex-col justify-center items-center px-3 py-6"
+        style={{ background: PRIMARY, minWidth: 90 }}
+      >
+        <div           className="text-white font-bold whitespace-nowrap text-center"
+          style={{
+            transform: 'rotate(-90deg)',
+            transformOrigin: 'center center',
+            fontSize: '28px',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            letterSpacing: '0'
+          }}
+>
+  {discount}
+</div>
+
       </div>
 
-      {/* Success Modal with Animation */}
-      {showSuccess && (
-        <div
-          className={`fixed top-20 left-1/2 -translate-x-1/2 bg-orange-500 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 z-50 ${
-            isAnimatingOut ? "animate-fadeOutDown" : "animate-fadeInUp"
-          }`}
-        >
-          <CheckCircle2 className="w-5 h-5" />
-          <span className="font-medium">{successMessage}</span>
+      <div className="flex flex-col flex-1 px-5 py-5 pb-4 bg-[#FDF9F7] border-l-2 border-dashed border-[#AD6038] gap-2.5">
+        <div className="flex items-center justify-between pr-1.5">
+          <h3 className="font-lexend font-[634] text-lg leading-6 text-[#4B4E4B]">
+            {code}
+          </h3>
+          <button
+            onClick={onCopy}
+            className="flex items-center gap-1.5 text-[#874B2C] min-w-[80px] justify-end py-1"
+            aria-label={`Copy coupon ${code}`}
+          >
+            <Copy
+              className="w-[18px] h-[18px] text-[#9A5632]"
+              strokeWidth={2}
+            />
+            <span className="font-lexend font-[634] text-base leading-[22px]">
+              Copy
+            </span>
+          </button>
         </div>
-      )}
+
+        <p className="font-lexend font-[326] text-sm leading-5 text-[#7D817D]">
+          {description}
+        </p>
+        <div className="h-[1px] bg-[#E5E6E5] w-full" />
+        <button className="font-lexend font-[634] text-sm leading-5 text-[#7D817D] text-left py-1">
+          Read more
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Header() {
+  return (
+    <header className="w-full border-b border-[#E5E6E5] bg-white sticky top-0 z-50">
+      <div className="flex items-center justify-between px-5 md:px-6 py-4 max-w-[1200px] mx-auto">
+        <div className="flex items-end gap-1.5 pb-0.5">
+          <img 
+          src={"/logo.png"}
+          className="h-10 w-10 p-2"
+          />
+          <div className="bg-gradient-to-r from-[#744025] to-[#9A5632] bg-clip-text text-transparent pb-0.5">
+            SPACEZ
+          </div>
+        </div>
+        <button
+          onClick={() => toast("Menu (coming soon)")}
+          className="w-6 h-6 flex items-center justify-center"
+          aria-label="Menu"
+        >
+          <Menu className="w-4 h-4 text-[#9A5632]" strokeWidth={2} />
+        </button>
+      </div>
+    </header>
+  );
+}
+
+function StatusBar() {
+  return (
+    <div className="flex justify-between items-end px-6 py-2.5 bg-white h-10 max-w-[1200px] mx-auto md:hidden">
+      <div className="text-[#646864] font-medium text-sm">9:30</div>
+      <div className="flex items-center gap-1">
+        <svg width="18" height="15" viewBox="0 0 18 15" fill="none">
+          <path
+            opacity="0.1"
+            d="M7.5 0.416626C4.1 0.416626 1.125 1.90413 -1 4.24163L7.5 14.5833L16 4.24163C13.875 1.90413 10.9 0.416626 7.5 0.416626Z"
+            fill="#646864"
+          />
+        </svg>
+        <svg width="15" height="16" viewBox="0 0 15 16" fill="none">
+          <path
+            d="M0.583008 0.416626L14.7497 14.5833H0.583008V0.416626Z"
+            fill="#646864"
+          />
+        </svg>
+        <svg width="9" height="15" viewBox="0 0 9 15" fill="none">
+          <path
+            opacity="0.3"
+            d="M6.5 0H3.5V1.5H2C1.448 1.5 1 2.00375 1 2.625V13.875C1 14.4963 1.448 15 2 15H8C8.552 15 9 14.4963 9 13.875V2.625C9 2.00375 8.552 1.5 8 1.5H6.5V0Z"
+            fill="#646864"
+          />
+          <path
+            d="M1 8C1 8.58333 1 13.3667 1 13.95C1 14.5299 1.448 15 2 15H8C8.552 15 9 14.5299 9 13.95C9 13.3667 9 8.58333 9 8H1Z"
+            fill="#646864"
+          />
+        </svg>
+      </div>
     </div>
   );
 }
